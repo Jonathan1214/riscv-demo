@@ -49,11 +49,11 @@ wire alu_src_op;	// select src2 for alu
 // ---
 wire reg_write;		// regfile write enable
 
-assign branch	  = ds_ctrl[5];
-assign mem_read	  = ds_ctrl[4];
-assign mem_write  = ds_ctrl[3];
-assign mem2reg	  = ds_ctrl[2];
-assign alu_src_op = ds_ctrl[1];
+assign alu_src_op = ds_ctrl[5];
+assign branch	  = ds_ctrl[4];
+assign mem_read	  = ds_ctrl[3];
+assign mem_write  = ds_ctrl[2];
+assign mem2reg	  = ds_ctrl[1];
 assign reg_write  = ds_ctrl[0];
 
 assign es_ctrl = ds_ctrl;

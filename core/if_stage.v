@@ -3,7 +3,7 @@
 // @Author       :  Jiangxuan Li
 // @Created      :  2022/3/22 22:32:58
 // @Description  :  instruction fetching
-// 
+//
 // -----------------------------------------------------------------------------
 // History
 // -----------------------------------------------------------------------------
@@ -16,16 +16,14 @@ module if_stage (
 	,input rst_n  // Asynchronous reset active low
 
 	,input [31:0] pre_pc
-	,input pc_src
-	,input en
+	,input 		  pc_src
 
-// 测试时初始化 inst ram
-	,input [31:0] wdata
-	,input wen
-	,input waddr
-	
 	,output [31:0] nx_pc
-	,output [31:0] instr
+
+// 2022/5/2 10:56:34
+// 将 inst mem 放到模块外部，增加信号
+	// 向下一级传递的信号
+	,output [31:0] inst_ram_raddr
 );
 
 reg  [31:0] pc;
@@ -46,16 +44,6 @@ always @(posedge clk or negedge rst_n) begin
 		pc <= n_pc;
 	end
 end
-
-memory_md U_inst_mem (
-		.clk   (clk),
-		.ren   (1'b1),
-		// 地址是需要处理的
-		.wen   (wen),
-		.addr  (pc[17:2]),
-		.wdata (wdata),
-		.rdata (instr)
-	);
 
 
 

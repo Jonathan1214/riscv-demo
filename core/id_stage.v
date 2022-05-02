@@ -12,8 +12,10 @@
 // =============================================================================
 
 module id_stage (
-	 input  clk    // Clock
-	,input  rst_n  // Asynchronous reset active low
+	//- Clock
+	//- positive edge
+	 input  clk
+	,input  rst_n  //- Asynchronous reset active low
 
 // for branch
 	,input  [31:0] pc
@@ -22,17 +24,17 @@ module id_stage (
 	,input  [31:0] instr
 
 // write regfile
-	,input  [ 4:0] waddr
-	,input  reg_wen
+	,input  [ 4:0] ds_rd_in
+	,input  	   reg_wen
 	,input  [31:0] wdata
 
-// for alu
+// output for alu
 	,output [31:0] src1
 	,output [31:0] src2
 	,output [31:0] imm
 
 // rd for R type
-	,output [ 4:0] ds_rd
+	,output [ 4:0] ds_rd_out
 
 // control signals
 	,output [11:0] alu_control
@@ -43,6 +45,7 @@ assign nx_pc = pc;
 
 wire [4:0] rs1;
 wire [4:0] rs2;
+wire [4:0] rd;
 wire [2:0] funct3;
 wire [6:0] funct7;
 wire [6:0] opcode;
@@ -53,6 +56,9 @@ assign rd     = instr[11:7 ];
 assign funct3 = instr[14:12];
 assign funct7 = instr[31:25];
 assign opcode = instr[ 6:0 ];
+
+
+assign ds_rd  = rd;
 
 // decoder
 wire [  7:0] funct3_d;
@@ -152,22 +158,20 @@ wire mem2reg;       // if data writen to regfile comes from data ram
 wire alu_src_op;	// select src2 for alu
 wire reg_write;		// regfile write enable
 
+assign alu_src_op   = inst_lw | inst_sw;
 assign branch		= inst_beq;
 assign mem_read		= inst_lw;
 assign mem_write	= inst_sw;
 assign mem2reg		= inst_lw;
-assign alu_src_op   = inst_lw | inst_sw;
 assign reg_write  	= R_type  | inst_lw;
 
-assign ds_ctrl = {branch,
-				  mem_read,
-				  mem_write,
-				  mem2reg,
-				  alu_src_op,
-				  reg_write
+assign ds_ctrl = {alu_src_op, // 5
+				  branch,     // 4
+				  mem_read,   // 3
+				  mem_write,  // 2
+				  mem2reg,    // 1
+				  reg_write   // 0
 				  };
-
-
 
 
 // 寄存器堆
@@ -179,7 +183,7 @@ regfile inst_regfile
 		.rd_addr_2 (rs2),
 		.data_o_2  (src2),
 		.wr_addr   (waddr),
-		.wr_en     (wen),
+		.wr_en     (reg_wen),
 		.wr_data   (wdata)
 	);
 

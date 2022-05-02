@@ -15,14 +15,11 @@
 module mem_stage (
 	 input 			clk    // Clock
 	,input 			rst_n  // Asynchronous reset active low
-	
-	,input 			ren
 
-	,input  [31:0]  alu_result
+	,input  [31:0]  mem_out_data
+	,output [31:0]  ms_mem_out
 
-	,input 	[31:0] 	addr
-	,input 	[31:0] 	wr_data
-	,output [31:0]  mem_out_data
+	,input  [31:0]  es_alu_result
 	,output [31:0]  ms_alu_result
 
 // rd for R type
@@ -30,31 +27,25 @@ module mem_stage (
 	,output [ 4:0]	ms_rd
 	
 	,input 	[ 5:0] 	es_ctrl
-	,input 			pc
 	,input 			zero
 	,output 		pc_src
 
+	//- mem stage 寄存的控制信号
 	,output [ 5:0]  ms_ctrl
 );
 
-wire   branch   	 = es_ctrl[5];
-assign pc_src 		 = branch & zero;
+wire branch     = es_ctrl[4];
+wire mem_read	= es_ctrl[3];
+wire mem_write  = es_ctrl[2];
+
+assign ms_mem_out    = mem_out_data;
+assign pc_src        = branch & zero;
 assign ms_alu_result = alu_result;
-assign ms_ctrl 		 = es_ctrl;
-
+// 2022/5/2 10:54:58
+// 可以将先下一级传递的 ctrl 信号调整更短
+assign ms_ctrl = es_ctrl;
+assign ms_rd   = es_rd;
 // data ram
-
-localparam DEPTH = 1024;
-memory_md #(
-		.DEPTH(DEPTH)
-	) U_data_mem (
-		.clk   (clk),
-		.ren   (ren),
-		.wen   (wen),
-		.addr  (addr),
-		.wdata (wr_data),
-		.rdata (mem_out_data)
-	);
 
 
 endmodule
