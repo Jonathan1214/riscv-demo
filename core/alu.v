@@ -15,7 +15,8 @@ module alu (
 	input  [11:0] alu_control,
 	input  [31:0] alu_src1,
 	input  [31:0] alu_src2,
-	output [31:0] alu_result
+	output [31:0] alu_result,
+	output zero
 );
 
 // 2022/3/20 21:06:42
@@ -102,5 +103,7 @@ assign alu_result = ({32{op_add|op_sub}} & add_sub_result)
 				  | ({32{op_srl 	  }} & srl_result)
 				  | ({32{op_sra 	  }} & sra_result)
 				  | ({32{op_lui	 	  }} & lui_result);
+
+assign zero = alu_result == 0;
 
 endmodule

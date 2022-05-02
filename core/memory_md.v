@@ -15,19 +15,18 @@
 module memory_md #(
 	// 2022/3/20 21:34:23
 	// 先设置一个 100 深度的 memo
-	parameter DEPTH = 100,
+	parameter DEPTH = 128,
 	parameter WIDTH = 32,
-	parameter WIDTH_BITS = 30
+	parameter WIDTH_BITS = 16
 )(
 	 input  	clk    // Clock
 	// input rst_n,  // Asynchronous reset active low
 	,input   	ren
-	,input   	[WIDTH_BITS-1:0] raddr
 	,input   	wen
-	,input   	[WIDTH_BITS-1:0] waddr
-	,input   	[WIDTH-1:0] wdata
+	,input   	[WIDTH_BITS-1:0] addr
+	,input   	[     WIDTH-1:0] wdata
 
-	,output reg [WIDTH-1:0] rdata
+	,output reg [     WIDTH-1:0] rdata
 );
 
 
@@ -35,13 +34,12 @@ module memory_md #(
 reg [WIDTH-1:0] memo [0:DEPTH-1];
 
 always @(posedge clk) begin
-	if (wen == 1'b1)
-		memo[waddr] <= wdata;
-end
-
-always @(posedge clk) begin
-	if (ren == 1'b1)
-		rdata <= memo[raddr];
+	if (ren == 1'b1) begin
+		rdata <= memo[addr];
+	end
+	if (wen == 1'b1) begin
+		memo[addr] <= wdata;
+	end
 end
 
 endmodule
