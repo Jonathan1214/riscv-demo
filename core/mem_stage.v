@@ -40,7 +40,7 @@ wire mem_write  = es_ctrl[2];
 
 assign ms_mem_out    = mem_out_data;
 assign pc_src        = branch & zero;
-assign ms_alu_result = alu_result;
+assign ms_alu_result = es_alu_result;
 // 2022/5/2 10:54:58
 // 可以将先下一级传递的 ctrl 信号调整更短
 assign ms_ctrl = es_ctrl;

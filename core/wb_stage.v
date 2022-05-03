@@ -29,7 +29,7 @@ module wb_stage (
 wire   mem2reg      = ms_ctrl[1];
 
 assign ws_reg_wen   = ms_ctrl[0];
-assign ws_reg_wdata = mem2reg == 1'b1 ? mem_out_data : ms_alu_result;
+assign ws_reg_wdata = mem2reg == 1'b1 ? ms_mem_out : ms_alu_result;
 assign ws_rd        = ms_rd;
 
 

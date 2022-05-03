@@ -3,7 +3,7 @@
 // @Author       :  Jiangxuan Li
 // @Created      :  2022/3/22 22:49:01
 // @Description  :  instruction decoding
-// 
+//
 // -----------------------------------------------------------------------------
 // History
 // -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ assign funct7 = instr[31:25];
 assign opcode = instr[ 6:0 ];
 
 
-assign ds_rd  = rd;
+assign ds_rd_out  = rd;
 
 // decoder
 wire [  7:0] funct3_d;
@@ -109,18 +109,18 @@ assign imm =  ({32{I_type}} & {{20{imm_I[11]}}, imm_I})
 // TODO 添加更多控制逻辑
 // 2022/4/30 17:04:33
 // 译码阶段需要产生控制逻辑
-wire op_add;	//! 加法操作
-wire op_sub;	//! 减法操作
-wire op_slt;	//! 有符号比较，小于置位
-wire op_sltu;	//! 无符号比较，小于置位
-wire op_and;	//! 按位与
-wire op_nor;	//! 按位或非
-wire op_or;		//! 按位或
-wire op_xor;	//! 按位异或
-wire op_sll;	//! 逻辑左移
-wire op_srl; 	//! 逻辑右移
-wire op_sra;	//! 算术右移
-wire op_lui;	//! 高位加载
+wire op_add;	//- 加法操作
+wire op_sub;	//- 减法操作
+wire op_slt;	//- 有符号比较，小于置位
+wire op_sltu;	//- 无符号比较，小于置位
+wire op_and;	//- 按位与
+wire op_nor;	//- 按位或非
+wire op_or;		//- 按位或
+wire op_xor;	//- 按位异或
+wire op_sll;	//- 逻辑左移
+wire op_srl; 	//- 逻辑右移
+wire op_sra;	//- 算术右移
+wire op_lui;	//- 高位加载
 
 assign  alu_control[ 0] = op_add ;
 assign  alu_control[ 1] = op_sub ;
@@ -182,7 +182,7 @@ regfile inst_regfile
 		.data_o_1  (src1),
 		.rd_addr_2 (rs2),
 		.data_o_2  (src2),
-		.wr_addr   (waddr),
+		.wr_addr   (ds_rd_in),
 		.wr_en     (reg_wen),
 		.wr_data   (wdata)
 	);
