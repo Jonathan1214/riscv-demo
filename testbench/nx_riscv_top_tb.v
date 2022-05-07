@@ -21,8 +21,8 @@ module nx_riscv_top_tb;
 
 
 // Ports
-reg clk;
-reg rst_n;
+reg clk = 0;
+reg rst_n = 0;
 reg inst_ram_wen;
 reg [31:0] inst_ram_waddr;
 reg [31:0] inst_ram_wdata;
@@ -34,7 +34,7 @@ reg [ 4:0] regfile_waddr_initial;
 reg [31:0] regfile_wdata_initial;
 
     always
-        #`PERIOD  clk = !clk ;
+        #(`PERIOD/2)  clk = !clk ;
 
 
     task sys_reset;
@@ -91,12 +91,12 @@ reg [31:0] regfile_wdata_initial;
     initial
         begin
             // reset 10 clk
-            sys_reset(100);
+            sys_reset(55);
             // test a add 
-            initial_inst_ram(0, 32'b0000000_00001_00010_000_0110011);
+            initial_inst_ram(32'h0000_0008, 32'b0000000_00001_00010_000_00011_0110011);
             initial_regfile(5'b00001, 38);
             initial_regfile(5'b00010, 22);
-            
+            sys_reset(55);
             #(`PERIOD*10);
             $finish;
         end
@@ -106,14 +106,21 @@ reg [31:0] regfile_wdata_initial;
         $dumpvars(0, nx_riscv_top_tb);
     end
 
-    nx_riscv_top
-        nx_riscv_top_dut (
-            .clk            (clk            ),
-            .rst_n          (rst_n          ),
-            .inst_ram_wen   (inst_ram_wen   ),
-            .inst_ram_waddr (inst_ram_waddr ),
-            .inst_ram_wdata (inst_ram_wdata )
-        );
+    nx_riscv_top 
+    nx_riscv_top_dut (
+      .clk                    (clk                    ),
+      .rst_n                  (rst_n                  ),
+      .inst_ram_wen           (inst_ram_wen           ),
+      .inst_ram_waddr         (inst_ram_waddr         ),
+      .inst_ram_wdata         (inst_ram_wdata         ),
+      .data_ram_wen_initial   (data_ram_wen_initial   ),
+      .data_ram_waddr_initial (data_ram_waddr_initial ),
+      .data_ram_wdata_initial (data_ram_wdata_initial ),
+      .regfile_wen_initial    (regfile_wen_initial    ),
+      .regfile_waddr_initial  (regfile_waddr_initial  ),
+      .regfile_wdata_initial  ( regfile_wdata_initial )
+    );
+  
 
 endmodule
 

@@ -32,202 +32,148 @@ module nx_riscv_top (
     ,input [31:0] regfile_wdata_initial
 );
 
-// if stage wire
+
+// pipeline signal
+wire fs_valid;
+wire ds_ready;
+wire ds_valid;
+wire es_ready;
+wire es_valid;
+wire ms_ready;
+wire ms_valid;
+wire ws_ready;
+
+// bus signal
+wire [150:0] ds2es_bus;
+wire [106:0] es2ms_bus;
+wire [ 37:0] ms2ws_bus;
+
 wire [31:0] pre_pc;
-wire [31:0] pc_src;
-wire [31:0] fs_nx_pc;
+wire        pc_src;
+
+wire [31:0] fs_pc;
+wire [31:0] fs_inst;
+
+wire [ 4:0] regfile_waddr;
+wire        regfile_wen;
+wire [31:0] regfile_wdata;
+
+// instruction ram signal
+wire [31:0] inst_ram_addr;
+wire        inst_ram_ren;
 wire [31:0] inst_ram_raddr;
+wire [31:0] inst_ram_rdata;
 
-// access instr mem
-wire [31:0] wdata;
-wire        wen;
-wire [31:0] waddr;
-wire [31:0] instr_mem;
+// data ram signals
+wire         data_ram_wen  ;
+wire         data_ram_ren  ;
+wire [ 31:0] data_ram_addr ;
+wire [ 31:0] data_ram_wdata;
+wire [ 31:0] data_ram_rdata;
+//- for test
+wire         data_ram_wen_t;
+wire [ 31:0] data_ram_addr_t;
+wire [ 31:0] data_ram_wdata_t;
 
-// id stage wire
-wire [31:0] ds_pc;
-wire [31:0] ds_nx_pc;
-wire [31:0] ds_instr;
-wire [ 4:0] ds_rd_in;
-wire        ds_reg_wen;
-wire [31:0] ds_reg_wdata;
-wire [31:0] ds_src1;
-wire [31:0] ds_src2;
-wire [31:0] ds_imm;
-wire [ 4:0] ds_rd_out;
-wire [11:0] ds_alu_control;
-wire [ 5:0] ds_ctrl;
+wire [ 31:0] ms_mem_out    ;
+wire [ 31:0] ms_pc         ;
 
-
-// exe stage wire
-wire [31:0] es_pc;
-wire [31:0] es_nx_pc;
-wire [31:0] es_alu_src1;
-wire [31:0] es_alu_src2;
-wire [31:0] es_imm;
-wire [11:0] es_alu_control;
-wire [ 4:0] ds_rd;
-wire [ 4:0] es_rd ;
-// write data to data ram
-wire [31:0] es_wr_data;
-wire [ 5:0] es_ctrl;
-wire        es_zero;
-wire [31:0] es_alu_result;
-
-
-// mem stage wire
-wire        ren;
-wire [31:0] alu_result;
-wire [31:0] addr;
-wire [31:0] wr_data;
-wire [31:0] mem_out_data;
-wire [31:0] ms_alu_result;
-// rd for R type
-wire [ 4:0] ms_rd;
-wire        pc;
-wire        zero;
-wire [ 5:0] ms_ctrl;
-
-// wb stage wire
 wire [ 4:0] ws_rd;
 wire        ws_reg_wen;
 wire [31:0] ws_reg_wdata;
 
-// memory wire connect
+// 做一个选择，初始化ram时使用 waddr
+assign inst_ram_addr = inst_ram_wen ? inst_ram_waddr
+                         : inst_ram_raddr;
+assign pre_pc         = ms_pc;
 
-wire  inst_ram_ren = 1'b1;
-wire [31:0] inst_ram_addr ;
-wire [31:0] inst_ram_rdata;
+assign regfile_wen    = ws_reg_wen | regfile_wen_initial;
+assign regfile_waddr  = regfile_wen_initial ? regfile_waddr_initial : ws_rd;
+assign regfile_wdata  = regfile_wen_initial ? regfile_wdata_initial : ws_reg_wdata;
 
-// 根据读写位置控制
-assign inst_ram_addr = inst_ram_wen ? inst_ram_waddr : inst_ram_raddr;
-
-wire data_ram_ren  ;
-wire data_ram_wen  ;
-wire [31:0] data_ram_addr ;
-wire [31:0] data_ram_wdata;
-wire [31:0] data_ram_rdata;
-
-assign data_ram_ren   = es_ctrl[3]    ;
-assign mem_out_data   = data_ram_rdata;
-
-// 2022/05/03 23:04:39
-//- 增加 data ram 的初始化数据选择，用于测试
-assign data_ram_wen   = es_ctrl[2] | data_ram_wen_initial;
-assign data_ram_addr  = data_ram_wen_initial ? data_ram_waddr_initial : es_alu_result ;
-assign data_ram_wdata = data_ram_wen_initial ? data_ram_waddr_initial : es_wr_data    ;
-
-// if stage wire connect
-assign pre_pc = es_nx_pc;
-
-// id stage wire connect
-assign ds_pc           = fs_nx_pc    ;
-assign ds_instr        = inst_ram_rdata;
-
-// 2022/05/03 23:02:42
-//- 增加了用于测试的初始化使能
-//- 关于 regfile 的初始化
-assign ds_rd_in        = regfile_wen_initial ? regfile_waddr_initial : ws_rd;
-assign ds_reg_wen      = ws_reg_wen  | regfile_wen_initial;
-assign ds_reg_wdata    = regfile_wen_initial ? regfile_wdata_initial : ws_reg_wdata;
-
-// exe stage wire connect
-assign es_pc          = ds_pc;
-assign es_alu_src1    = ds_src1;
-assign es_alu_src2    = ds_src2;
-assign es_alu_control = ds_alu_control;
-assign ds_rd          = ds_rd_out;
-
-// mem stage wire connect
-
-// wb stage wire connect
+assign data_ram_wen_t = data_ram_wen | data_ram_wen_initial;
+assign data_ram_addr_t = data_ram_wen_initial ? data_ram_waddr_initial : data_ram_addr;
+assign data_ram_wdata_t = data_ram_wen_initial ? data_ram_wdata_initial : data_ram_wdata;
 
 
-if_stage inst_if_stage
-    (
-        .clk           (clk          ),
-        .rst_n         (rst_n        ),
-        .pre_pc        (pre_pc       ),
-        .pc_src        (pc_src       ),
-        .nx_pc         (fs_nx_pc     ),
-        .inst_ram_raddr(inst_ram_raddr)
+if_stage U_if_stage (
+    .clk             (clk ),
+    .rst_n           (rst_n),
+    .ds_ready        (ds_ready ),
+    .fs_valid        (fs_valid ),
+    .pre_pc          (pre_pc ),
+    .pc_src          (pc_src ),
+    .fs_pc           (fs_pc ),
+    .fs_inst         (fs_inst ),
+    .inst_ram_ren    (inst_ram_ren ),
+    .inst_ram_raddr  (inst_ram_raddr ),
+    .inst_ram_rdata  (inst_ram_rdata)
+);
+
+id_stage U_id_stage (
+      .clk           (clk ),
+      .rst_n         (rst_n ),
+      .fs_valid      (fs_valid ),
+      .es_ready      (es_ready ),
+      .ds_valid      (ds_valid ),
+      .ds_ready      (ds_ready ),
+      .fs_inst       (fs_inst ),
+      .fs_pc         (fs_pc ),
+      .regfile_waddr (regfile_waddr ),
+      .regfile_wen   (regfile_wen ),
+      .regfile_wdata (regfile_wdata ),
+      .ds2es_bus     ( ds2es_bus)
     );
 
-id_stage inst_id_stage
-    (
-        .clk         (clk           ),
-        .rst_n       (rst_n         ),
-        .pc          (ds_pc         ),
-        .nx_pc       (ds_nx_pc      ),
-        .instr       (ds_instr      ),
-        .ds_rd_in    (ds_rd_in      ),
-        .reg_wen     (ds_reg_wen    ),
-        .wdata       (ds_reg_wdata  ),
-        .src1        (ds_src1       ),
-        .src2        (ds_src2       ),
-        .imm         (imm           ),
-        .ds_rd_out   (ds_rd_out     ),
-        .alu_control (ds_alu_control),
-        .ds_ctrl     (ds_ctrl       )
+exe_stage U_exe_stage (
+      .clk        (clk ),
+      .rst_n      (rst_n ),
+      .ms_ready   (ms_ready ),
+      .ds_valid   (ds_valid ),
+      .es_valid   (es_valid ),
+      .es_ready   (es_ready ),
+      .ds2es_bus  (ds2es_bus ),
+      .es2ms_bus  ( es2ms_bus)
     );
 
-
-exe_stage inst_exe_stage
-    (
-        .clk         (clk           ),
-        .rst_n       (rst_n         ),
-        .pc          (es_pc         ),
-        .nx_pc       (es_nx_pc      ),
-        .alu_src1    (es_alu_src1   ),
-        .alu_src2    (es_alu_src2   ),
-        .imm         (imm           ),
-        .alu_control (es_alu_control),
-        .ds_ctrl     (ds_ctrl       ),
-        .ds_rd       (ds_rd         ),
-        .es_rd       (es_rd         ),
-        .wr_data     (es_wr_data    ),
-        .es_ctrl     (es_ctrl       ),
-        .zero        (es_zero       ),
-        .alu_result  (es_alu_result )
+mem_stage U_mem_stage (
+      .clk            (clk            ),
+      .rst_n          (rst_n          ),
+      .es_valid       (es_valid       ),
+      .ws_ready       (ws_ready       ),
+      .ms_ready       (ms_ready       ),
+      .ms_valid       (ms_valid       ),
+      .data_ram_wen   (data_ram_wen   ),
+      .data_ram_ren   (data_ram_ren   ),
+      .data_ram_addr  (data_ram_addr  ),
+      .data_ram_wdata (data_ram_wdata ),
+      .data_ram_rdata (data_ram_rdata ),
+      .ms_mem_out     (ms_mem_out     ),
+      .pc_src         (pc_src         ),
+      .ms_pc          (ms_pc          ),
+      .es2ms_bus      (es2ms_bus      ),
+      .ms2ws_bus      (ms2ws_bus      )
     );
+  
 
-mem_stage inst_mem_stage
-    (
-      .clk           (clk           ),
-      .rst_n         (rst_n         ),
-      .mem_out_data  (mem_out_data  ),
-      .ms_mem_out    (ms_mem_out    ),
-      .es_alu_result (es_alu_result ),
-      .ms_alu_result (ms_alu_result ),
-      .es_rd         (es_rd         ),
-      .ms_rd         (ms_rd         ),
-      .es_ctrl       (es_ctrl       ),
-      .zero          (zero          ),
-      .pc_src        (pc_src        ),
-      .ms_ctrl       (ms_ctrl       )
+wb_stage U_wb_stage (
+      .clk           (clk          ),
+      .rst_n         (rst_n        ),
+      .ms_mem_out    (ms_mem_out   ),
+      .ms2ws_bus     (ms2ws_bus    ),
+      .ws_rd         (ws_rd        ),
+      .ws_reg_wen    (ws_reg_wen   ),
+      .ws_reg_wdata  (ws_reg_wdata ),
+      .ws_ready      (ws_ready)
     );
-
-
-wb_stage inst_wb_stage
-    (
-        .clk           (clk          ),
-        .rst_n         (rst_n        ),
-        .ms_mem_out    (ms_mem_out   ),
-        .ms_alu_result (ms_alu_result),
-        .ms_ctrl       (ms_ctrl      ),
-        .ms_rd         (ms_rd        ),
-        .ws_rd         (ws_rd        ),
-        .ws_reg_wen    (ws_reg_wen   ),
-        .ws_reg_wdata  (ws_wdata     )
-    );
-
+  
 
 memory_md U_inst_mem (
         .clk   (clk),
         .ren   (inst_ram_ren  ),
         // 地址是需要处理的
         .wen   (inst_ram_wen  ),
-        .addr  (inst_ram_addr ),
+        .addr  (inst_ram_addr[17:2] ),
         .wdata (inst_ram_wdata),
         .rdata (inst_ram_rdata)
     );
@@ -238,9 +184,9 @@ memory_md #(
     ) U_data_mem (
         .clk   (clk),
         .ren   (data_ram_ren  ),
-        .wen   (data_ram_wen  ),
-        .addr  (data_ram_addr ),
-        .wdata (data_ram_wdata),
+        .wen   (data_ram_wen_t  ),
+        .addr  (data_ram_addr_t[17:2] ),
+        .wdata (data_ram_wdata_t),
         .rdata (data_ram_rdata)
     );
 

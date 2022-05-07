@@ -13,7 +13,6 @@ date：2021.03.20
 指令格式列出如下：
 
 form:`funct               funct3          opcode`
-
 lw:  `imm[11:0]       rs1 010 rd          0000011`
 sw:  `imm[11:5]   rs2 rs1 010 imm[4:0]    0100011`
 beq: `im[12|10:5] rs2 rs1 000 imm[4:1|11] 1100011`
